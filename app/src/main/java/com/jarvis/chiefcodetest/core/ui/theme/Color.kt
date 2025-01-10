@@ -1,4 +1,4 @@
-package com.jarvis.chiefcodetest.ui.theme
+package com.jarvis.chiefcodetest.core.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
