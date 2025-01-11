@@ -1,64 +1,77 @@
 package com.jarvis.chiefcodetest.core.network
 
+import com.jarvis.chiefcodetest.BuildConfig.X_API_KEY
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.logging.ANDROID
+import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.get
 import io.ktor.client.request.headers
 import io.ktor.client.request.post
-import io.ktor.http.HeadersBuilder
-import io.ktor.serialization.kotlinx.json.json
+import io.ktor.client.statement.bodyAsText
 import kotlinx.serialization.json.Json
+import javax.inject.Inject
 
 
-class KtorClient {
+class KtorClient @Inject constructor() {
+
+    companion object {
+        const val HEADER_X_API_KEY = "X-API-KEY"
+
+        val DEFAULT_HEADER_MAP = mapOf<String, String>(HEADER_X_API_KEY to X_API_KEY)
+    }
 
     val client = HttpClient(CIO) {
-        install(Logging)
-        install(ContentNegotiation) {
-            json(Json {
-                prettyPrint = true
-                isLenient = true
-            })
+        install(Logging) {
+            logger = Logger.ANDROID
         }
         install(HttpTimeout) {
             requestTimeoutMillis = 10000
         }
     }
 
-    suspend inline fun <reified T> getRequest(url: String, crossinline header: HeadersBuilder.() -> Unit = {}): T? {
+    suspend inline fun <reified T> getRequest(url: String, headerMap: Map<String, String> = mapOf()): T? {
         return request(
             client
                 .get(url) {
                     headers {
-                        header()
+                        headerMap.forEach {
+                            append(it.key, it.value)
+                        }
+                        DEFAULT_HEADER_MAP.forEach {
+                            append(it.key, it.value)
+                        }
                     }
                 }
-                .body()
+                .bodyAsText()
         )
     }
 
-    suspend inline fun <reified T> postRequest(url: String, crossinline header: HeadersBuilder.() -> Unit = {}): T? {
+    suspend inline fun <reified T> postRequest(url: String, headerMap: Map<String, String> = mapOf()): T? {
         return request(
             client
                 .post(url) {
                     headers {
-                        header()
+                        headerMap.forEach {
+                            append(it.key, it.value)
+                        }
+                        DEFAULT_HEADER_MAP.forEach {
+                            append(it.key, it.value)
+                        }
                     }
                 }
-                .body()
+                .bodyAsText()
         )
     }
 
-    suspend inline fun <reified T> request(block: suspend () -> T): T? {
-        return try {
-            block()
-        } catch (e: Exception) {
-            println("Error posting data: ${e.message}")
-            null
-        }
+    inline fun <reified T> request(strResult: String): T? {
+//        return try {
+            return Json.decodeFromString<T>(strResult)
+//        } catch (e: Exception) {
+//            println("Error posting data: ${e.message}")
+//            null
+//        }
     }
 }

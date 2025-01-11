@@ -1,4 +1,6 @@
 package com.jarvis.chiefcodetest.core.base
 
-abstract class BaseViewModel {
+import androidx.lifecycle.ViewModel
+
+abstract class BaseViewModel : ViewModel() {
 }
